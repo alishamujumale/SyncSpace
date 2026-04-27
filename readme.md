@@ -1,0 +1,1 @@
+Built an AI-powered collaborative workspace that converts high-level project ideas into structured execution plans including features, tasks, and timelines, with real-time team collaboration and intelligent assistance.
