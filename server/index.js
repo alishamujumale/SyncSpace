@@ -5,6 +5,7 @@ const cors = require('cors');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const passport = require('passport');
+const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 
 // Connect to MongoDB
@@ -15,6 +16,18 @@ require('./config/passport');
 
 const app = express();
 const server = http.createServer(app);
+
+// Attach Socket.io to the server
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Load socket logic
+require('./sockets/documentSocket')(io);
 
 // Middleware
 app.use(cors({

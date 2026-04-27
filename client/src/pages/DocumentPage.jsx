@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { getDocument, updateDocument, getComments, addComment, deleteComment } from '../api';
+import { io } from 'socket.io-client';
+import { getDocument, getComments, addComment, deleteComment } from '../api';
+import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
 const DocumentPage = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [document, setDocument] = useState(null);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
@@ -12,11 +15,55 @@ const DocumentPage = () => {
   const [newComment, setNewComment] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeUsers, setActiveUsers] = useState([]);
+  const socketRef = useRef(null);
+  const saveTimerRef = useRef(null);
+  const versionTimerRef = useRef(null);
 
   useEffect(() => {
     fetchDocument();
     fetchComments();
   }, [id]);
+
+  useEffect(() => {
+    if (!document || !user) return;
+
+    // Connect socket
+    socketRef.current = io('http://localhost:5000', {
+      withCredentials: true
+    });
+
+    // Join document room
+    socketRef.current.emit('join-document', {
+      documentId: id,
+      user
+    });
+
+    // Receive changes from other users
+    socketRef.current.on('receive-changes', (newContent) => {
+      setContent(newContent);
+    });
+
+    // Receive active users list
+    socketRef.current.on('active-users', (users) => {
+      setActiveUsers(users);
+    });
+
+    // Save a version every 2 minutes
+    versionTimerRef.current = setInterval(() => {
+      socketRef.current.emit('save-version', {
+        documentId: id,
+        content,
+        userId: user._id
+      });
+    }, 120000);
+
+    return () => {
+      socketRef.current.disconnect();
+      clearInterval(versionTimerRef.current);
+      clearTimeout(saveTimerRef.current);
+    };
+  }, [document, user]);
 
   const fetchDocument = async () => {
     try {
@@ -40,15 +87,35 @@ const DocumentPage = () => {
     }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await updateDocument(id, { title, content });
-    } catch (error) {
-      console.error('Failed to save:', error);
-    } finally {
-      setSaving(false);
+  const handleContentChange = useCallback((e) => {
+    const newContent = e.target.value;
+    setContent(newContent);
+
+    // Broadcast to other users instantly
+    if (socketRef.current) {
+      socketRef.current.emit('document-change', {
+        documentId: id,
+        content: newContent
+      });
     }
+
+    // Auto save to MongoDB after 1 second of no typing
+    clearTimeout(saveTimerRef.current);
+    setSaving(true);
+    saveTimerRef.current = setTimeout(() => {
+      if (socketRef.current) {
+        socketRef.current.emit('save-document', {
+          documentId: id,
+          content: newContent,
+          title
+        });
+      }
+      setSaving(false);
+    }, 1000);
+  }, [id, title]);
+
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
   };
 
   const handleAddComment = async () => {
@@ -71,33 +138,73 @@ const DocumentPage = () => {
     }
   };
 
-  if (loading) return <div>Loading document...</div>;
-  if (!document) return <div>Document not found</div>;
+  if (loading) return <div style={styles.loading}>Loading document...</div>;
+  if (!document) return <div style={styles.loading}>Document not found</div>;
 
   return (
     <div>
       <Navbar />
       <div style={styles.container}>
+
+        {/* Editor Section */}
         <div style={styles.editorSection}>
+
+          {/* Active users */}
+          <div style={styles.activeUsers}>
+            {activeUsers.map((u, i) => (
+              <img
+                key={i}
+                src={u.avatar}
+                alt={u.name}
+                title={u.name}
+                style={styles.activeAvatar}
+              />
+            ))}
+            {activeUsers.length > 0 && (
+              <span style={styles.activeLabel}>
+                {activeUsers.length} editing
+              </span>
+            )}
+          </div>
+
           <input
             style={styles.titleInput}
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={handleTitleChange}
             placeholder="Document title..."
           />
+
+          <div style={styles.savingIndicator}>
+            {saving ? '💾 Saving...' : '✅ Saved'}
+          </div>
+
           <textarea
             style={styles.editor}
             value={content}
-            onChange={e => setContent(e.target.value)}
-            placeholder="Start typing..."
+            onChange={handleContentChange}
+            placeholder="Start typing... changes sync in real time!"
           />
-          <button onClick={handleSave} style={styles.saveBtn}>
-            {saving ? 'Saving...' : 'Save'}
-          </button>
+
+          {/* Share link */}
+          <div style={styles.shareBox}>
+            <span style={styles.shareLabel}>Share link:</span>
+            <code style={styles.shareLink}>
+              {`http://localhost:3000/doc/${id}`}
+            </code>
+            <button
+              style={styles.copyBtn}
+              onClick={() => navigator.clipboard.writeText(
+                `http://localhost:3000/doc/${id}`
+              )}
+            >
+              Copy
+            </button>
+          </div>
         </div>
 
+        {/* Comment Section */}
         <div style={styles.commentSection}>
-          <h3 style={styles.commentHeading}>Comments</h3>
+          <h3 style={styles.commentHeading}>💬 Comments</h3>
           <div style={styles.commentList}>
             {comments.length === 0 ? (
               <p style={styles.noComments}>No comments yet</p>
@@ -143,6 +250,14 @@ const DocumentPage = () => {
 };
 
 const styles = {
+  loading: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    fontSize: '1.2rem',
+    color: '#888'
+  },
   container: {
     display: 'flex',
     gap: '24px',
@@ -156,6 +271,23 @@ const styles = {
     flexDirection: 'column',
     gap: '12px'
   },
+  activeUsers: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  activeAvatar: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    border: '2px solid #4285f4',
+    objectFit: 'cover'
+  },
+  activeLabel: {
+    fontSize: '0.85rem',
+    color: '#4285f4',
+    fontWeight: 'bold'
+  },
   titleInput: {
     fontSize: '1.6rem',
     fontWeight: 'bold',
@@ -164,6 +296,10 @@ const styles = {
     padding: '8px 0',
     outline: 'none',
     color: '#1a1a2e'
+  },
+  savingIndicator: {
+    fontSize: '0.85rem',
+    color: '#888'
   },
   editor: {
     flex: 1,
@@ -176,15 +312,31 @@ const styles = {
     outline: 'none',
     lineHeight: '1.6'
   },
-  saveBtn: {
+  shareBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    backgroundColor: '#f8f9fa',
+    padding: '10px 14px',
+    borderRadius: '8px'
+  },
+  shareLabel: {
+    fontSize: '0.85rem',
+    color: '#666'
+  },
+  shareLink: {
+    fontSize: '0.85rem',
+    color: '#4285f4',
+    flex: 1
+  },
+  copyBtn: {
     backgroundColor: '#4285f4',
     color: 'white',
     border: 'none',
-    padding: '10px 24px',
-    borderRadius: '8px',
+    padding: '6px 12px',
+    borderRadius: '6px',
     cursor: 'pointer',
-    fontSize: '1rem',
-    alignSelf: 'flex-end'
+    fontSize: '0.85rem'
   },
   commentSection: {
     width: '300px',
