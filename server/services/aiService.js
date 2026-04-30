@@ -29,7 +29,7 @@ Generate a detailed project plan in the following JSON format only, no extra tex
 }`;
 
     const response = await groq.chat.completions.create({
-      model: 'llama3-8b-8192',
+      model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7
     });
@@ -59,7 +59,7 @@ User question: "${question}"
 Give a short, helpful, direct answer in plain text.`;
 
     const response = await groq.chat.completions.create({
-      model: 'llama3-8b-8192',
+      model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5
     });
@@ -84,7 +84,7 @@ Focus on decisions made and action items:
 ${chatText}`;
 
     const response = await groq.chat.completions.create({
-      model: 'llama3-8b-8192',
+      model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.5
     });
