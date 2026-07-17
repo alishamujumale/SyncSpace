@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Document = require('../models/Document');
 const Version = require('../models/Version');
-const User = require('../models/User');
+const User = require('../models/user');
 const isAuthenticated = require('../middleware/isAuthenticated');
 const { v4: uuidv4 } = require('uuid');
 
