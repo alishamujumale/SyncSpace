@@ -1,10 +1,14 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../api';
 
 const Home = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const authError = query.get('error');
+
   if (loading) return <div style={styles.loading}>Loading...</div>;
   if (user) return <Navigate to="/dashboard" />;
 
@@ -28,6 +32,11 @@ const Home = () => {
             Get started free →
           </button>
         </div>
+        {authError && (
+          <div style={styles.errorBox}>
+            {authError === 'auth_failed' ? 'Authentication failed. Please try again.' : 'Server error during login. Check OAuth configuration.'}
+          </div>
+        )}
         {/* Glow */}
         <div style={styles.glow} />
       </div>
@@ -97,6 +106,7 @@ const styles = {
   heroBtns: { display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' },
   ctaBtn: { background: 'linear-gradient(135deg, #4f46e5, #2563eb)', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '10px', fontSize: '1rem', cursor: 'pointer', fontWeight: '600', letterSpacing: '-0.2px' },
   demoBtn: { backgroundColor: '#fff', color: '#334155', border: '1px solid #cbd5e1', padding: '14px 28px', borderRadius: '10px', fontSize: '1rem', cursor: 'pointer' },
+  errorBox: { marginTop: '20px', padding: '14px 18px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '12px', border: '1px solid #fca5a5', maxWidth: '620px', marginLeft: 'auto', marginRight: 'auto', fontSize: '0.95rem' },
   glow: { position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '300px', background: 'radial-gradient(ellipse, rgba(79,70,229,0.16) 0%, transparent 70%)', pointerEvents: 'none', zIndex: -1 },
   stats: { display: 'flex', justifyContent: 'center', gap: '60px', padding: '40px 24px', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', backgroundColor: 'rgba(255,255,255,0.7)' },
   statItem: { textAlign: 'center' },
