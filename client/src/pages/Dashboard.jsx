@@ -15,191 +15,134 @@ const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
+  useEffect(() => { fetchRooms(); }, []);
 
   const fetchRooms = async () => {
     try {
       const res = await getRooms();
       setRooms(res.data.rooms);
-    } catch (error) {
-      console.error('Failed to fetch rooms:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  const handleCreateRoom = async () => {
+  const handleCreate = async () => {
     if (!roomName.trim()) return;
     try {
       const res = await createRoom({ name: roomName, description: roomDesc });
-      setRooms([res.data.room, ...rooms]);
-      setRoomName('');
-      setRoomDesc('');
-      setShowCreate(false);
       navigate(`/room/${res.data.room._id}`);
-    } catch (error) {
-      console.error('Failed to create room:', error);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const handleJoinRoom = async () => {
+  const handleJoin = async () => {
     if (!inviteCode.trim()) return;
     try {
       const res = await joinRoom(inviteCode.trim().toUpperCase());
-      setRooms([res.data.room, ...rooms]);
-      setInviteCode('');
-      setShowJoin(false);
       navigate(`/room/${res.data.room._id}`);
-    } catch (error) {
-      alert('Invalid invite code. Please try again.');
-    }
+    } catch (err) { alert('Invalid invite code'); }
   };
 
-  const handleDeleteRoom = async (e, id) => {
+  const handleDelete = async (e, id) => {
     e.stopPropagation();
     if (!window.confirm('Delete this room?')) return;
     try {
       await deleteRoom(id);
       setRooms(rooms.filter(r => r._id !== id));
-    } catch (error) {
-      console.error('Failed to delete room:', error);
-    }
+    } catch (err) { console.error(err); }
   };
 
+  const roomColors = ['#a78bfa', '#60a5fa', '#34d399', '#f472b6', '#fbbf24', '#fb923c'];
+
   return (
-    <div>
+    <div style={styles.page}>
       <Navbar />
       <div style={styles.container}>
 
         {/* Header */}
         <div style={styles.header}>
           <div>
-            <h2 style={styles.heading}>👋 Welcome, {user?.name?.split(' ')[0]}!</h2>
-            <p style={styles.subheading}>Your team workspaces</p>
+            <h1 style={styles.heading}>Good day, {user?.name?.split(' ')[0]} 👋</h1>
+            <p style={styles.sub}>Your workspaces — {rooms.length} room{rooms.length !== 1 ? 's' : ''}</p>
           </div>
           <div style={styles.headerBtns}>
-            <button
-              style={styles.joinBtn}
-              onClick={() => { setShowJoin(!showJoin); setShowCreate(false); }}
-            >🔗 Join Room</button>
-            <button
-              style={styles.createBtn}
-              onClick={() => { setShowCreate(!showCreate); setShowJoin(false); }}
-            >+ Create Room</button>
+            <button style={styles.outlineBtn} onClick={() => { setShowJoin(!showJoin); setShowCreate(false); }}>
+              Join room
+            </button>
+            <button style={styles.solidBtn} onClick={() => { setShowCreate(!showCreate); setShowJoin(false); }}>
+              + New room
+            </button>
           </div>
         </div>
 
-        {/* Create room form */}
+        {/* Create form */}
         {showCreate && (
           <div style={styles.formBox}>
-            <h4 style={styles.formTitle}>Create a new room</h4>
-            <input
-              style={styles.input}
-              placeholder="Room name *"
-              value={roomName}
-              onChange={e => setRoomName(e.target.value)}
-            />
-            <input
-              style={styles.input}
-              placeholder="Description (optional)"
-              value={roomDesc}
-              onChange={e => setRoomDesc(e.target.value)}
-            />
+            <p style={styles.formTitle}>Create a workspace</p>
+            <input style={styles.input} placeholder="Room name *" value={roomName} onChange={e => setRoomName(e.target.value)} />
+            <input style={styles.input} placeholder="Description (optional)" value={roomDesc} onChange={e => setRoomDesc(e.target.value)} />
             <div style={styles.formRow}>
-              <button style={styles.saveBtn} onClick={handleCreateRoom}>
-                Create
-              </button>
-              <button
-                style={styles.cancelBtn}
-                onClick={() => setShowCreate(false)}
-              >Cancel</button>
+              <button style={styles.solidBtn} onClick={handleCreate}>Create</button>
+              <button style={styles.outlineBtn} onClick={() => setShowCreate(false)}>Cancel</button>
             </div>
           </div>
         )}
 
-        {/* Join room form */}
+        {/* Join form */}
         {showJoin && (
           <div style={styles.formBox}>
-            <h4 style={styles.formTitle}>Join a room</h4>
-            <input
-              style={styles.input}
-              placeholder="Enter invite code (e.g. AB12CD34)"
-              value={inviteCode}
-              onChange={e => setInviteCode(e.target.value)}
-            />
+            <p style={styles.formTitle}>Join a workspace</p>
+            <input style={styles.input} placeholder="Invite code (e.g. AB12CD34)" value={inviteCode} onChange={e => setInviteCode(e.target.value)} />
             <div style={styles.formRow}>
-              <button style={styles.saveBtn} onClick={handleJoinRoom}>
-                Join
-              </button>
-              <button
-                style={styles.cancelBtn}
-                onClick={() => setShowJoin(false)}
-              >Cancel</button>
+              <button style={styles.solidBtn} onClick={handleJoin}>Join</button>
+              <button style={styles.outlineBtn} onClick={() => setShowJoin(false)}>Cancel</button>
             </div>
           </div>
         )}
 
-        {/* Rooms grid */}
+        {/* Rooms */}
         {loading ? (
-          <p style={styles.loading}>Loading rooms...</p>
+          <div style={styles.emptyBox}>
+            <div style={styles.spinner} />
+          </div>
         ) : rooms.length === 0 ? (
-          <div style={styles.empty}>
-            <p style={styles.emptyTitle}>No rooms yet</p>
-            <p style={styles.emptySubtitle}>
-              Create a room to start collaborating with your team!
-            </p>
+          <div style={styles.emptyBox}>
+            <p style={styles.emptyIcon}>◈</p>
+            <p style={styles.emptyTitle}>No workspaces yet</p>
+            <p style={styles.emptySub}>Create or join a room to get started</p>
+            <button style={styles.solidBtn} onClick={() => setShowCreate(true)}>+ Create your first room</button>
           </div>
         ) : (
           <div style={styles.grid}>
-            {rooms.map(room => (
-              <div
-                key={room._id}
-                style={styles.card}
-                onClick={() => navigate(`/room/${room._id}`)}
-              >
-                <div style={styles.cardTop}>
-                  <h3 style={styles.cardTitle}>{room.name}</h3>
-                  {room.leader._id === user?._id && (
-                    <span style={styles.leaderBadge}>👑 Leader</span>
-                  )}
+            {rooms.map((room, idx) => {
+              const color = roomColors[idx % roomColors.length];
+              return (
+                <div key={room._id} style={styles.card} onClick={() => navigate(`/room/${room._id}`)}>
+                  <div style={styles.cardTop}>
+                    <div style={{ ...styles.cardIcon, backgroundColor: color + '20', border: `1px solid ${color}40`, color }}>
+                      {room.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={styles.cardInfo}>
+                      <h3 style={styles.cardTitle}>{room.name}</h3>
+                      {room.description && <p style={styles.cardDesc}>{room.description}</p>}
+                    </div>
+                  </div>
+                  <div style={styles.cardFooter}>
+                    <div style={styles.avatarStack}>
+                      {room.members.slice(0, 4).map((m, i) => (
+                        <img key={i} src={m.avatar} alt={m.name} title={m.name}
+                          style={{ ...styles.memberAvatar, marginLeft: i > 0 ? '-8px' : 0, borderColor: '#141414' }} />
+                      ))}
+                      <span style={styles.memberCount}>{room.members.length} member{room.members.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div style={styles.cardActions}>
+                      {room.leader._id === user?._id && (
+                        <button onClick={e => handleDelete(e, room._id)} style={styles.deleteBtn}>Delete</button>
+                      )}
+                      <span style={styles.arrowBtn}>→</span>
+                    </div>
+                  </div>
                 </div>
-                {room.description && (
-                  <p style={styles.cardDesc}>{room.description}</p>
-                )}
-                <div style={styles.cardMembers}>
-                  {room.members.slice(0, 4).map((m, i) => (
-                    <img
-                      key={i}
-                      src={m.avatar}
-                      alt={m.name}
-                      style={{ ...styles.memberAvatar, marginLeft: i > 0 ? '-8px' : 0 }}
-                      title={m.name}
-                    />
-                  ))}
-                  {room.members.length > 4 && (
-                    <span style={styles.moreMembers}>
-                      +{room.members.length - 4}
-                    </span>
-                  )}
-                  <span style={styles.memberCount}>
-                    {room.members.length} member{room.members.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <div style={styles.cardFooter}>
-                  <span style={styles.cardDate}>
-                    {new Date(room.updatedAt).toLocaleDateString()}
-                  </span>
-                  {room.leader._id === user?._id && (
-                    <button
-                      onClick={(e) => handleDeleteRoom(e, room._id)}
-                      style={styles.deleteBtn}
-                    >Delete</button>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -208,36 +151,37 @@ const Dashboard = () => {
 };
 
 const styles = {
-  container: { maxWidth: '1100px', margin: '0 auto', padding: '32px 24px' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' },
-  heading: { fontSize: '1.8rem', color: '#1a1a2e', marginBottom: '4px' },
-  subheading: { color: '#888', fontSize: '0.95rem' },
-  headerBtns: { display: 'flex', gap: '12px' },
-  joinBtn: { backgroundColor: 'white', color: '#1a1a2e', border: '2px solid #1a1a2e', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 'bold' },
-  createBtn: { backgroundColor: '#4285f4', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 'bold' },
-  formBox: { backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '12px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' },
-  formTitle: { fontSize: '1rem', fontWeight: 'bold', color: '#1a1a2e', marginBottom: '4px' },
-  input: { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.95rem' },
+  page: { minHeight: '100vh', background: 'linear-gradient(180deg, #f8fafc 0%, #f3f6fb 100%)' },
+  container: { maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' },
+  heading: { fontSize: '1.8rem', fontWeight: '700', color: '#0f172a', marginBottom: '6px', letterSpacing: '-0.5px' },
+  sub: { color: '#64748b', fontSize: '14px' },
+  headerBtns: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
+  solidBtn: { background: 'linear-gradient(135deg, #4f46e5, #2563eb)', color: 'white', border: 'none', padding: '9px 18px', borderRadius: '8px', fontSize: '14px', cursor: 'pointer', fontWeight: '600' },
+  outlineBtn: { backgroundColor: '#fff', color: '#334155', border: '1px solid #cbd5e1', padding: '9px 18px', borderRadius: '8px', fontSize: '14px', cursor: 'pointer' },
+  formBox: { backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 10px 25px rgba(15,23,42,0.05)' },
+  formTitle: { fontWeight: '600', color: '#0f172a', fontSize: '15px' },
+  input: { padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', backgroundColor: '#f8fafc', color: '#0f172a', width: '100%', boxSizing: 'border-box' },
   formRow: { display: 'flex', gap: '10px' },
-  saveBtn: { flex: 1, backgroundColor: '#4285f4', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.95rem' },
-  cancelBtn: { flex: 1, backgroundColor: '#eee', color: '#444', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.95rem' },
-  loading: { color: '#888', textAlign: 'center', marginTop: '60px' },
-  empty: { textAlign: 'center', marginTop: '80px' },
-  emptyTitle: { fontSize: '1.3rem', color: '#444', marginBottom: '8px' },
-  emptySubtitle: { color: '#888' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' },
-  card: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', cursor: 'pointer', transition: 'transform 0.2s', border: '1px solid #f0f0f0' },
-  cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-  cardTitle: { fontSize: '1.1rem', fontWeight: 'bold', color: '#1a1a2e' },
-  leaderBadge: { fontSize: '0.75rem', backgroundColor: '#fff3cd', color: '#856404', padding: '3px 8px', borderRadius: '10px' },
-  cardDesc: { fontSize: '0.85rem', color: '#888', marginBottom: '12px' },
-  cardMembers: { display: 'flex', alignItems: 'center', marginBottom: '12px' },
-  memberAvatar: { width: '28px', height: '28px', borderRadius: '50%', border: '2px solid white', objectFit: 'cover' },
-  moreMembers: { fontSize: '0.75rem', color: '#888', marginLeft: '8px' },
-  memberCount: { fontSize: '0.8rem', color: '#888', marginLeft: '10px' },
+  emptyBox: { textAlign: 'center', marginTop: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' },
+  spinner: { width: '32px', height: '32px', border: '2px solid #e2e8f0', borderTop: '2px solid #4f46e5', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
+  emptyIcon: { fontSize: '2.5rem', color: '#94a3b8' },
+  emptyTitle: { fontSize: '1.1rem', fontWeight: '600', color: '#0f172a' },
+  emptySub: { color: '#64748b', fontSize: '14px', marginBottom: '8px' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' },
+  card: { backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'border-color 0.2s, transform 0.15s, box-shadow 0.2s', boxShadow: '0 10px 25px rgba(15,23,42,0.04)' },
+  cardTop: { display: 'flex', gap: '14px', alignItems: 'flex-start', marginBottom: '20px' },
+  cardIcon: { width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '1.1rem', flexShrink: 0 },
+  cardInfo: { flex: 1, minWidth: 0 },
+  cardTitle: { fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '4px' },
+  cardDesc: { fontSize: '13px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   cardFooter: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  cardDate: { fontSize: '0.8rem', color: '#aaa' },
-  deleteBtn: { backgroundColor: '#ff4d4d', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }
+  avatarStack: { display: 'flex', alignItems: 'center' },
+  memberAvatar: { width: '24px', height: '24px', borderRadius: '50%', border: '2px solid', objectFit: 'cover' },
+  memberCount: { fontSize: '12px', color: '#64748b', marginLeft: '10px' },
+  cardActions: { display: 'flex', alignItems: 'center', gap: '8px' },
+  deleteBtn: { backgroundColor: 'transparent', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', padding: '4px 8px', borderRadius: '4px' },
+  arrowBtn: { color: '#94a3b8', fontSize: '16px' }
 };
 
 export default Dashboard;

@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #f8fafc 0%, #f3f6fb 100%);
+  color: #0f172a;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; font-size: 15px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Tiptap */
+.ProseMirror { min-height: 460px; outline: none; color: #0f172a; background: #ffffff; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; }
+.ProseMirror p { margin-bottom: 10px; }
+.ProseMirror h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 14px; color: #0f172a; }
+.ProseMirror h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 10px; color: #1e293b; }
+.ProseMirror ul, .ProseMirror ol { padding-left: 22px; margin-bottom: 10px; }
+.ProseMirror li { margin-bottom: 4px; }
+.ProseMirror code { background: #eef2ff; color: #4f46e5; padding: 2px 7px; border-radius: 4px; font-size: 13px; }
+.ProseMirror pre { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin-bottom: 10px; }
+.ProseMirror mark { background: #fef3c7; color: #92400e; padding: 1px 3px; border-radius: 3px; }
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+@media (max-width: 768px) {
+  .ProseMirror { min-height: 300px; }
+}

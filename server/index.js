@@ -16,11 +16,24 @@ require('./config/passport');
 
 const app = express();
 const server = http.createServer(app);
+const isProduction = process.env.NODE_ENV === 'production';
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  ...(process.env.CLIENT_URLS || '').split(',').map(url => url.trim()).filter(Boolean),
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+].filter(Boolean);
 
 // Attach Socket.io to the server
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -33,15 +46,22 @@ require('./sockets/taskSocket')(io);
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
 app.use(express.json());
 
 // Session setup
+app.set('trust proxy', 1);
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'syncspace-secret',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
@@ -51,7 +71,8 @@ app.use(session({
   cookie: {
     maxAge: 1000 * 60 * 60 * 24 * 7,
     httpOnly: true,
-    secure: false
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax'
   }
 }));
 

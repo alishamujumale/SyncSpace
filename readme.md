@@ -72,3 +72,36 @@ Database operations (MongoDB)
 AI requests (Groq API)
 Authentication (Google OAuth)
 Updates are pushed instantly to connected users
+
+## Deployment
+
+### Frontend (Vercel)
+- Connect the client folder to Vercel.
+- Set the environment variable:
+  - REACT_APP_API_URL=https://your-render-backend-url.onrender.com
+- Build command: npm run build
+- Output directory: build
+
+### Backend (Render)
+- Connect the server folder to Render.
+- Set these environment variables:
+  - NODE_ENV=production
+  - PORT=10000
+  - MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/syncspace?retryWrites=true&w=majority
+  - SESSION_SECRET=your-random-secret
+  - CLIENT_URL=https://your-vercel-app.vercel.app
+  - CLIENT_URLS=https://your-vercel-app.vercel.app
+  - GOOGLE_CLIENT_ID=your-google-oauth-client-id
+  - GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+  - GOOGLE_CALLBACK_URL=https://your-render-backend-url.onrender.com/auth/google/callback
+- Start command: npm start
+
+### Database (MongoDB Atlas)
+- Create a free Atlas cluster.
+- Create a database user.
+- Allow access from 0.0.0.0/0 for easy deployment.
+- Use the connection string in MONGO_URI.
+
+### Important notes
+- The frontend now uses REACT_APP_API_URL instead of localhost.
+- The backend now supports production CORS and secure cookies for deployed environments.
