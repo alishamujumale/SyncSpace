@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:10000';
+const normalizeUrl = (value, fallback) => {
+  if (!value) return fallback;
+  const trimmed = value.trim().replace(/\/$/, '');
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
+export const API_BASE_URL = normalizeUrl(process.env.REACT_APP_API_URL, 'http://localhost:10000');
 
 const API = axios.create({
   baseURL: API_BASE_URL,

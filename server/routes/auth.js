@@ -7,9 +7,15 @@ router.get('/google', passport.authenticate('google', {
   scope: ['profile', 'email']
 }));
 
+const normalizeUrl = (value) => {
+  if (!value) return null;
+  const trimmed = value.trim().replace(/\/$/, '');
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
 // Step 2: Google redirects back here after login
 router.get('/google/callback', (req, res, next) => {
-  const clientUrl = process.env.CLIENT_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null);
+  const clientUrl = normalizeUrl(process.env.CLIENT_URL) || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null);
 
   if (!clientUrl) {
     console.error('CLIENT_URL is not configured for production auth redirects.');

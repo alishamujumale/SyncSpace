@@ -17,10 +17,15 @@ require('./config/passport');
 const app = express();
 const server = http.createServer(app);
 const isProduction = process.env.NODE_ENV === 'production';
+const normalizeOrigin = (value) => {
+  if (!value) return null;
+  const trimmed = value.trim().replace(/\/$/, '');
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
 const localOrigins = isProduction ? [] : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 const allowedOrigins = [
-  process.env.CLIENT_URL,
-  ...(process.env.CLIENT_URLS || '').split(',').map(url => url.trim()).filter(Boolean),
+  normalizeOrigin(process.env.CLIENT_URL),
+  ...(process.env.CLIENT_URLS || '').split(',').map(normalizeOrigin).filter(Boolean),
   ...localOrigins
 ].filter(Boolean);
 
