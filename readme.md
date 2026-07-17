@@ -75,26 +75,43 @@ Updates are pushed instantly to connected users
 
 ## Deployment
 
-### Frontend (Vercel)
-- Connect the client folder to Vercel.
-- Set the environment variable:
-  - REACT_APP_API_URL=https://your-render-backend-url.onrender.com
-- Build command: npm run build
-- Output directory: build
+### Frontend (Railway)
+- Connect the `client` folder to Railway as a static site or Node.js service.
+- Set the environment variable for your Railway project:
+  - REACT_APP_API_URL=https://your-railway-backend-url.up.railway.app
+- Build command: `npm run build`
+- Output directory: `build`
+- If you use Railway Static Sites, configure the site to serve the `build` directory after the build step.
 
-### Backend (Render)
-- Connect the server folder to Render.
-- Set these environment variables:
+### Backend (Railway)
+- Connect the `server` folder to Railway as a Node.js service.
+- Set these environment variables in your Railway project settings:
   - NODE_ENV=production
-  - PORT=10000
   - MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/syncspace?retryWrites=true&w=majority
   - SESSION_SECRET=your-random-secret
-  - CLIENT_URL=https://your-vercel-app.vercel.app
-  - CLIENT_URLS=https://your-vercel-app.vercel.app
+  - CLIENT_URL=https://your-railway-frontend-url.up.railway.app
+  - CLIENT_URLS=https://your-railway-frontend-url.up.railway.app
   - GOOGLE_CLIENT_ID=your-google-oauth-client-id
   - GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
-  - GOOGLE_CALLBACK_URL=https://your-render-backend-url.onrender.com/auth/google/callback
-- Start command: npm start
+  - GOOGLE_CALLBACK_URL=https://your-railway-backend-url.up.railway.app/auth/google/callback
+- Railway provides a `PORT` environment variable automatically; ensure the server uses `process.env.PORT || 10000`.
+- Start command: `npm start`
+
+### Google OAuth (register redirect)
+- In Google Cloud Console, add an Authorized redirect URI for your OAuth client:
+  - Production (Railway): `https://your-railway-backend-url.up.railway.app/auth/google/callback`
+  - Local testing: `http://localhost:10000/auth/google/callback`
+- Ensure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_CALLBACK_URL` are set in your Railway project (the `GOOGLE_CALLBACK_URL` must exactly match the redirect URI registered in Google Cloud).
+
+### Railway env variables reminder
+- Set the following env vars in your Railway project settings for the backend service:
+  - `NODE_ENV=production`
+  - `PORT` (Railway provides this automatically)
+  - `MONGO_URI` (the Atlas URI)
+  - `SESSION_SECRET`
+  - `CLIENT_URL` and `CLIENT_URLS` (your frontend URL)
+  - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`
+  - Any API keys (e.g., `OPENAI_API_KEY`, `GROQ_API_KEY`)
 
 ### Database (MongoDB Atlas)
 - Create a free Atlas cluster.

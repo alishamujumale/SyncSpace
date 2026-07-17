@@ -5,8 +5,9 @@ const useSocket = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Connect to the server
-    socketRef.current = io('http://localhost:5000', {
+    // Connect to the server (use REACT_APP_API_URL in production)
+    const socketUrl = process.env.REACT_APP_API_URL || 'http://localhost:10000';
+    socketRef.current = io(socketUrl, {
       withCredentials: true
     });
 
