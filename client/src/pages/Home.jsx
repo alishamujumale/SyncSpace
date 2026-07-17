@@ -70,7 +70,7 @@ const Home = () => {
       <div style={styles.ctaBanner}>
         <h2 style={styles.ctaBannerTitle}>Ready to build something?</h2>
         <p style={styles.ctaBannerSub}>Join your team on SyncSpace today.</p>
-        <button style={styles.ctaBtn} onClick={() => window.location.href = 'http://localhost:5000/auth/google'}>
+        <button style={styles.ctaBtn} onClick={() => window.location.href = `${API_BASE_URL}/auth/google`}>
           Get started free →
         </button>
       </div>
