@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { getDocument, getComments, addComment, deleteComment } from '../api';
+import { API_BASE_URL, getDocument, getComments, addComment, deleteComment } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import RichEditor from '../components/RichEditor';
@@ -46,7 +46,7 @@ const DocumentPage = () => {
 
   useEffect(() => {
     if (!document || !user) return;
-    socketRef.current = io('http://localhost:5000', { withCredentials: true });
+    socketRef.current = io(API_BASE_URL, { withCredentials: true });
     socketRef.current.emit('join-document', { documentId: id, user });
     socketRef.current.on('receive-changes', (newContent) => setContent(newContent));
     socketRef.current.on('active-users', (users) => setActiveUsers(users));

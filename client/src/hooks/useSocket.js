@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { API_BASE_URL } from '../api';
 
 const useSocket = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Connect to the server (use REACT_APP_API_URL in production)
-    const socketUrl = process.env.REACT_APP_API_URL || 'http://localhost:10000';
+    const socketUrl = API_BASE_URL;
     socketRef.current = io(socketUrl, {
       withCredentials: true
     });

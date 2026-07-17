@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { getRoom, getMessages, getRoomTasks, createTask, updateTask, deleteTask, generatePlan, askAI, summarizeChat } from '../api';
+import { API_BASE_URL, getRoom, getMessages, getRoomTasks, createTask, updateTask, deleteTask, generatePlan, askAI, summarizeChat } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
@@ -38,7 +38,7 @@ const RoomPage = () => {
 
   useEffect(() => {
     if (!room || !user) return;
-    socketRef.current = io('http://localhost:5000', { withCredentials: true });
+    socketRef.current = io(API_BASE_URL, { withCredentials: true });
     socketRef.current.emit('join-room', { roomId: id, user });
     socketRef.current.emit('join-taskboard', { roomId: id });
     socketRef.current.on('receive-message', msg => setMessages(prev => [...prev, msg]));
