@@ -12,17 +12,32 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
+      const email = profile.emails?.[0]?.value;
+      const avatar = profile.photos?.[0]?.value;
+      const name = profile.displayName || 'Google User';
+
+      if (!email) {
+        return done(new Error('Google profile is missing an email address'), null);
+      }
+
       let user = await User.findOne({ googleId: profile.id });
+      if (!user) {
+        user = await User.findOne({ email });
+      }
 
       if (user) {
+        if (!user.googleId) {
+          user.googleId = profile.id;
+          await user.save();
+        }
         return done(null, user);
       }
 
       user = await User.create({
         googleId: profile.id,
-        name: profile.displayName,
-        email: profile.emails[0].value,
-        avatar: profile.photos[0].value
+        name,
+        email,
+        avatar
       });
 
       return done(null, user);

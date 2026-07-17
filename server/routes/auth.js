@@ -8,14 +8,27 @@ router.get('/google', passport.authenticate('google', {
 }));
 
 // Step 2: Google redirects back here after login
-router.get('/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: `${process.env.CLIENT_URL}/?error=auth_failed`
-  }),
-  (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
-  }
-);
+router.get('/google/callback', (req, res, next) => {
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+
+  passport.authenticate('google', { failureRedirect: `${clientUrl}/?error=auth_failed` }, (err, user) => {
+    if (err) {
+      console.error('Google auth callback error:', err);
+      return res.redirect(`${clientUrl}/?error=server_error`);
+    }
+    if (!user) {
+      return res.redirect(`${clientUrl}/?error=auth_failed`);
+    }
+
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Passport login error:', loginErr);
+        return res.redirect(`${clientUrl}/?error=server_error`);
+      }
+      return res.redirect(`${clientUrl}/dashboard`);
+    });
+  })(req, res, next);
+});
 
 // Get currently logged in user
 router.get('/me', (req, res) => {
