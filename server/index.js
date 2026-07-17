@@ -17,11 +17,11 @@ require('./config/passport');
 const app = express();
 const server = http.createServer(app);
 const isProduction = process.env.NODE_ENV === 'production';
+const localOrigins = isProduction ? [] : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 const allowedOrigins = [
   process.env.CLIENT_URL,
   ...(process.env.CLIENT_URLS || '').split(',').map(url => url.trim()).filter(Boolean),
-  'http://localhost:3000',
-  'http://127.0.0.1:3000'
+  ...localOrigins
 ].filter(Boolean);
 
 // Attach Socket.io to the server

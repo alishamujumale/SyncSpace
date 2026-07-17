@@ -9,7 +9,12 @@ router.get('/google', passport.authenticate('google', {
 
 // Step 2: Google redirects back here after login
 router.get('/google/callback', (req, res, next) => {
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const clientUrl = process.env.CLIENT_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : null);
+
+  if (!clientUrl) {
+    console.error('CLIENT_URL is not configured for production auth redirects.');
+    return res.status(500).send('CLIENT_URL is required in production');
+  }
 
   passport.authenticate('google', { failureRedirect: `${clientUrl}/?error=auth_failed` }, (err, user) => {
     if (err) {
