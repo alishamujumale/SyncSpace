@@ -22,18 +22,19 @@ router.get('/google/callback', (req, res, next) => {
     return res.status(500).send('CLIENT_URL is required in production');
   }
 
-  passport.authenticate('google', { failureRedirect: `${clientUrl}/?error=auth_failed` }, (err, user) => {
+  passport.authenticate('google', { failureRedirect: `${clientUrl}/?error=auth_failed` }, (err, user, info) => {
     if (err) {
-      console.error('Google auth callback error:', err);
+      console.error('Google auth callback error:', err, 'info:', info, 'query:', req.query);
       return res.redirect(`${clientUrl}/?error=server_error`);
     }
     if (!user) {
+      console.error('Google auth callback failed, no user:', info, 'query:', req.query);
       return res.redirect(`${clientUrl}/?error=auth_failed`);
     }
 
     req.logIn(user, (loginErr) => {
       if (loginErr) {
-        console.error('Passport login error:', loginErr);
+        console.error('Passport login error:', loginErr, 'user:', user, 'query:', req.query);
         return res.redirect(`${clientUrl}/?error=server_error`);
       }
       return res.redirect(`${clientUrl}/dashboard`);
