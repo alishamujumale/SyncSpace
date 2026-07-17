@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { getRoom, getMessages, getRoomTasks, createTask, updateTask, deleteTask, generatePlan, askAI, summarizeChat } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,6 @@ import Navbar from '../components/Navbar';
 const RoomPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [room, setRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -25,7 +24,17 @@ const RoomPage = () => {
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => { fetchData(); }, [id]);
+  const fetchData = useCallback(async () => {
+    try {
+      const [roomRes, msgRes, taskRes] = await Promise.all([getRoom(id), getMessages(id), getRoomTasks(id)]);
+      setRoom(roomRes.data.room);
+      setMessages(msgRes.data.messages);
+      setTasks(taskRes.data.tasks);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  }, [id]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
     if (!room || !user) return;
@@ -39,19 +48,9 @@ const RoomPage = () => {
     socketRef.current.on('task-changed', updated => setTasks(prev => prev.map(t => t._id === updated._id ? updated : t)));
     socketRef.current.on('task-removed', taskId => setTasks(prev => prev.filter(t => t._id !== taskId)));
     return () => socketRef.current.disconnect();
-  }, [room, user]);
+  }, [room, user, id]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-
-  const fetchData = async () => {
-    try {
-      const [roomRes, msgRes, taskRes] = await Promise.all([getRoom(id), getMessages(id), getRoomTasks(id)]);
-      setRoom(roomRes.data.room);
-      setMessages(msgRes.data.messages);
-      setTasks(taskRes.data.tasks);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  };
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;

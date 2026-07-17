@@ -22,7 +22,27 @@ const DocumentPage = () => {
   const socketRef = useRef(null);
   const saveTimerRef = useRef(null);
 
-  useEffect(() => { fetchDocument(); fetchComments(); }, [id]);
+  const fetchDocument = useCallback(async () => {
+    try {
+      const res = await getDocument(id);
+      setDocument(res.data.document);
+      setContent(res.data.document.content);
+      setTitle(res.data.document.title);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await getComments(id);
+      setComments(res.data.comments);
+    } catch (error) { console.error(error); }
+  }, [id]);
+
+  useEffect(() => { fetchDocument(); fetchComments(); }, [fetchDocument, fetchComments]);
 
   useEffect(() => {
     if (!document || !user) return;
@@ -34,27 +54,7 @@ const DocumentPage = () => {
       socketRef.current.disconnect();
       clearTimeout(saveTimerRef.current);
     };
-  }, [document, user]);
-
-  const fetchDocument = async () => {
-    try {
-      const res = await getDocument(id);
-      setDocument(res.data.document);
-      setContent(res.data.document.content);
-      setTitle(res.data.document.title);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchComments = async () => {
-    try {
-      const res = await getComments(id);
-      setComments(res.data.comments);
-    } catch (error) { console.error(error); }
-  };
+  }, [document, user, id]);
 
   const handleContentChange = useCallback((newContent) => {
     setContent(newContent);
