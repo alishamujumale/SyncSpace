@@ -8,13 +8,23 @@ const normalizeUrl = (value, fallback) => {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 };
 
+const requireEnv = (key, fallback = undefined) => {
+  const value = process.env[key] || fallback;
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+};
+
 const defaultPort = process.env.PORT || 10000;
 const defaultCallback = `http://localhost:${defaultPort}/auth/google/callback`;
-const callbackURL = normalizeUrl(process.env.GOOGLE_CALLBACK_URL, defaultCallback);
+const callbackURL = normalizeUrl(requireEnv('GOOGLE_CALLBACK_URL', defaultCallback));
+const googleClientID = requireEnv('GOOGLE_CLIENT_ID');
+const googleClientSecret = requireEnv('GOOGLE_CLIENT_SECRET');
 
 passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    clientID: googleClientID,
+    clientSecret: googleClientSecret,
     callbackURL,
     proxy: true
   },

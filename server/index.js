@@ -8,6 +8,20 @@ const passport = require('passport');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 
+const requiredProductionEnv = [
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'GOOGLE_CALLBACK_URL',
+  'CLIENT_URL'
+];
+if (process.env.NODE_ENV === 'production') {
+  requiredProductionEnv.forEach((key) => {
+    if (!process.env[key]) {
+      throw new Error(`Missing required environment variable in production: ${key}`);
+    }
+  });
+}
+
 // Connect to MongoDB
 connectDB();
 
